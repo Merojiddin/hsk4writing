@@ -2,6 +2,8 @@ import type { en } from './en'
 
 export const vi = {
   brand: 'Hanzi Studio',
+  providedContentNote:
+    'Đã thêm 440 câu sắp xếp từ và 215 từ gợi ý từ nội dung bạn gửi. Chưa có Đề 12 và từ gợi ý phần tranh của Đề 28. Cần bổ sung các tệp hình ảnh.',
   pages: 'trang',
   conflictError:
     'Bộ bài tập đã được sửa trong tab khác. Hãy sao lưu phần chỉnh sửa của bạn, rồi tải lại trang để mở bản đã lưu mới nhất.',

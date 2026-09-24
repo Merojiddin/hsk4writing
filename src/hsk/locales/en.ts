@@ -1,5 +1,7 @@
 export const en = {
   brand: 'Hanzi Studio',
+  providedContentNote:
+    '440 word-order questions and 215 keywords loaded from your text. Set 12 and the picture keywords for Set 28 were not supplied. Picture files still need to be added.',
   brandCategory: 'CHINESE LEARNING TOOLS',
   brandSubtitle: 'A little practice, every day.',
   workbook: 'Writing workbook',

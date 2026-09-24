@@ -25,6 +25,7 @@ import {
   loadWorkbook,
   MAX_TOTAL_IMAGE_CHARS,
   mergeWorkbook,
+  restoreWorkbook,
   saveWorkbook,
   validateWorkbook,
   WorkbookConflictError,
@@ -392,22 +393,19 @@ export function WorkbookApp() {
   const completedSets = workbook.sets.filter(
     (s) => wordCount(s) + pictureCount(s) === 15,
   ).length
-  const isSample =
-    selected.id === 1 &&
-    selected.words.every(
-      (q, i) => q.words === createWorkbook(1).sets[0].words[i].words,
-    ) &&
-    selected.pictures.every((q) => !q.image)
-
   useEffect(() => {
     let cancelled = false
     loadWorkbook()
       .then((saved) => {
         if (!cancelled) {
           if (saved) {
-            const restored = mergeWorkbook(createWorkbook(), saved)
+            const restored = restoreWorkbook(saved)
             workbookRef.current = restored
             setWorkbook(restored)
+            if (saved.providedContentRevision !== 1) {
+              revision.current += 1
+              setSaveStatus('saving')
+            }
           }
           setLoaded(true)
         }
@@ -690,7 +688,7 @@ export function WorkbookApp() {
                 </button>
               </div>
             )}
-            {isSample && <p className="sample-note">{copy.sampleNote}</p>}
+            <p className="sample-note">{copy.providedContentNote}</p>
             <div className="workspace-body">
               <div className="content-column">
                 {mode === 'preview' ? (

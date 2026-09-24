@@ -12,7 +12,8 @@
     "lint": "oxlint",
     "typecheck": "tsc -b",
     "preview": "vite preview",
-    "verify:hsk": "node scripts/verify-hsk-workbook.mjs"
+    "verify:hsk": "node scripts/verify-hsk-workbook.mjs",
+    "verify:content": "node scripts/verify-hsk-content.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.23.0",

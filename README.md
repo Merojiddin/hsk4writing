@@ -17,7 +17,7 @@ Open http://localhost:5174/. The webpage entry is `index.html`; the main interfa
 - Choose English or Vietnamese instructions.
 - Use **Print / Save PDF** to print the current set (2 pages) or all 45 sets (90 pages). Turn off browser headers and footers for clean pages.
 - Use **Back up workbook** to download a portable JSON file. **Import data** replaces matching numbered sets and retains the rest.
-- Set 01 contains draft word groups and keywords from the reference. Its pictures and the other sets are initially blank.
+- The supplied text includes 440 word-order questions and 215 picture keywords, kept in the original scrambled order. Set 12 is missing, as are the picture keywords for Set 28. Actual picture files still need to be added.
 
 Changes are saved in this browser's IndexedDB. There are no accounts, server database, or secret environment variables. Content is local to each browser and website origin; use JSON backup/import to move saved work between localhost, deployed websites, or devices. Hosting the application does not publish locally entered worksheets.
 
@@ -28,6 +28,7 @@ See [content and backup format](docs/hsk-worksheet-content.md) and the [project 
 ```sh
 npm run build
 npm run lint
+npm run verify:content
 # With npm run dev running in another terminal:
 npm run verify:hsk
 ```

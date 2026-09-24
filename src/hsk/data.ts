@@ -1,3 +1,5 @@
+import providedContent from './provided-content.json'
+
 export type WordQuestion = { id: string; words: string }
 export type PictureQuestion = {
   id: string
@@ -10,7 +12,11 @@ export type WorksheetSet = {
   words: WordQuestion[]
   pictures: PictureQuestion[]
 }
-export type Workbook = { version: 1; sets: WorksheetSet[] }
+export type Workbook = {
+  version: 1
+  providedContentRevision?: 1
+  sets: WorksheetSet[]
+}
 
 export const MAX_TOTAL_IMAGE_CHARS = 90 * 1024 * 1024
 
@@ -80,19 +86,55 @@ export function createWorkbook(count = 45): Workbook {
   }
   return {
     version: 1,
+    providedContentRevision: 1,
     sets: Array.from({ length: count }, (_, index) => ({
       id: index + 1,
       words: Array.from({ length: 10 }, (_, question) => ({
         id: `w${index + 1}-${question + 1}`,
-        words: index === 0 ? SAMPLE_WORDS[question] : '',
+        words: providedContent.sets[index].words[question] ?? '',
       })),
       pictures: Array.from({ length: 5 }, (_, question) => ({
         id: `p${index + 1}-${question + 1}`,
-        word: index === 0 ? SAMPLE_KEYWORDS[question] : '',
+        word: providedContent.sets[index].keywords[question] ?? '',
         image: '',
         alt: '',
       })),
     })),
+  }
+}
+
+/** Upgrade the original blank template once, retaining authored text and uploaded images. */
+export function restoreWorkbook(saved: Workbook): Workbook {
+  const merged = mergeWorkbook(createWorkbook(), saved)
+  if (saved.providedContentRevision === 1) return merged
+  const defaults = createWorkbook()
+  return {
+    ...merged,
+    providedContentRevision: 1,
+    sets: merged.sets.map((set) => {
+      const source = defaults.sets[set.id - 1]
+      const untouchedSample =
+        set.id === 1 &&
+        set.words.every((q, i) => q.words === SAMPLE_WORDS[i]) &&
+        set.pictures.every((q) => !q.image)
+      return {
+        ...set,
+        words: set.words.map((q, i) => ({
+          ...q,
+          words:
+            untouchedSample || !q.words.trim()
+              ? source.words[i].words
+              : q.words,
+        })),
+        pictures: set.pictures.map((q, i) => ({
+          ...q,
+          word:
+            !q.word.trim() || (untouchedSample && q.word === SAMPLE_KEYWORDS[i])
+              ? source.pictures[i].word
+              : q.word,
+        })),
+      }
+    }),
   }
 }
 
@@ -130,6 +172,12 @@ function imageData(value: unknown): string {
 /** Validate and copy only supported fields, including partial imports of numbered sets. */
 export function validateWorkbook(value: unknown): Workbook {
   const workbook = record(value)
+  if (
+    workbook.providedContentRevision !== undefined &&
+    workbook.providedContentRevision !== 1
+  ) {
+    throw new Error('Unsupported supplied content revision.')
+  }
   if (
     workbook.version !== 1 ||
     !Array.isArray(workbook.sets) ||
@@ -192,7 +240,13 @@ export function validateWorkbook(value: unknown): Workbook {
       }),
     }
   })
-  return { version: 1, sets: sets.sort((a, b) => a.id - b.id) }
+  return {
+    version: 1,
+    ...(workbook.providedContentRevision === 1
+      ? { providedContentRevision: 1 as const }
+      : {}),
+    sets: sets.sort((a, b) => a.id - b.id),
+  }
 }
 
 /** Import replaces matching numbered sets while retaining all other existing sets. */
@@ -204,7 +258,12 @@ export function mergeWorkbook(
     validateWorkbook(existing).sets.map((set) => [set.id, set]),
   )
   for (const set of validateWorkbook(incoming).sets) sets.set(set.id, set)
-  return validateWorkbook({ version: 1, sets: Array.from(sets.values()) })
+  return validateWorkbook({
+    version: 1,
+    providedContentRevision:
+      existing.providedContentRevision ?? incoming.providedContentRevision,
+    sets: Array.from(sets.values()),
+  })
 }
 
 function openDatabase(): Promise<IDBDatabase> {

@@ -238,7 +238,7 @@ try {
   await choose(inspection, 4)
   assert.equal(
     await inspection.locator('.word-input-row input').first().inputValue(),
-    '',
+    data.sets[3].words[0].words,
     'conflicting tab changes stay unsaved',
   )
   other.on('dialog', (d) => d.accept())

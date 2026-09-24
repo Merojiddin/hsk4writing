@@ -1,6 +1,6 @@
 # HSK 4 writing worksheet content
 
-The worksheet builder supports 45 numbered practice sets. Every set has 10 scrambled-word questions and 5 picture questions, each with a required word and space for a student's sentence. A set prints on two clean A4 pages, with no decorative background. The initial first set contains draft text transcribed from the supplied reference; its picture slots and all remaining sets are blank until content is added. Review the sample wording before distributing it to students. The reference photographs are layout examples, not installed exercise images.
+The worksheet builder supports 45 numbered practice sets. Every set has 10 scrambled-word questions and 5 picture questions, each with a required word and space for a student's sentence. A set prints on two clean A4 pages, with no decorative background. The starter now includes the supplied 440 word-order questions and 215 picture keywords exactly in their original scrambled order. Set 12 is entirely missing, and Set 28 has no picture keywords. No actual exercise picture files were supplied. Duplicate source uploads for Sets 29 and 45 are represented only once. Review transcription accuracy before distributing to students; no wording has been silently corrected.
 
 ## Editing and backups
 
@@ -41,4 +41,4 @@ Storage operations from one page are queued. Each save atomically reads the curr
 
 The exported `MAX_TOTAL_IMAGE_CHARS` and `imageDataSize(workbook)` support upload-budget checks; `validateWorkbook`, `mergeWorkbook`, and `saveWorkbook` enforce the limit with `WorkbookSizeError`. The builder is a local tool with no account sync; it stores only workbook content in its dedicated IndexedDB database. Browser data can be cleared, so keep exported backups of completed work.
 
-To change installed starter content, edit `SAMPLE_WORDS` and `SAMPLE_KEYWORDS` in `src/hsk/data.ts`. Starter changes affect new workbooks only; saved workbooks retain user edits. Complete content can also be supplied later as text and images for entry into the existing 45-set structure.
+Installed starter content is in `src/hsk/provided-content.json`. The optional workbook field `providedContentRevision: 1` records that this content has been applied. When an original template workbook is first opened, blank text fields are filled and an untouched original Set 01 sample is replaced by the supplied Set 01. Existing nonempty edits and uploaded pictures are preserved. After this one-time migration, intentionally cleared fields remain blank on reload. Further pictures and corrections can be entered through the editor or imported as numbered sets.
