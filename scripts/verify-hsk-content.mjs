@@ -3,6 +3,7 @@ import { createServer } from 'vite'
 
 const server = await createServer({
   configFile: false,
+  cacheDir: 'node_modules/.vite-content-verification',
   server: { middlewareMode: true },
   appType: 'custom',
 })

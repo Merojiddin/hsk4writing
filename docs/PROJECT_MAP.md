@@ -37,12 +37,13 @@ Standalone React 19 + TypeScript application built with Vite. `index.html` loads
 
 - `npm run build`: TypeScript and production Vite build.
 - `npm run lint`: Oxlint.
-- `npm run verify:content`: validates supplied-content counts, missing parts, exact representative transcription, and safe one-time migration.
+- `npm run verify:content`: validates supplied-content counts, missing parts, exact representative transcription, and safe one-time migration. Its Vite cache is isolated in `node_modules/.vite-content-verification` so it cannot invalidate a running development server.
 - `npm run verify:hsk`: requires a running local server at `http://127.0.0.1:5174`, Google Chrome, and Poppler `pdfinfo`. Covers edits, pictures, reload persistence, backup/partial import, malformed images, languages, print button, exact A4 page counts, long-text page bounds, mobile overflow, and cross-tab conflicts. Playwright is a development dependency; `HSK_PLAYWRIGHT_MODULE` can override its module path and `HSK_BASE_URL` can override the tested server.
 - Visual print QA: render PDFs from `artifacts/hsk/` using `pdftoppm`, then inspect the page images.
 
 ## Update notes
 
+- 2026-09-24: Published to `https://hsk4writing.vercel.app` and connected Vercel project `hsk4writing` to `Merojiddin/hsk4writing`; pushes to `main` trigger production deployment.
 - 2026-09-24: Added supplied text for 44 Part 1 sets and 43 Part 2 keyword sets without correcting or rearranging the transcription. Added an explicit missing-content notice in both languages and a one-time migration preserving existing edits and images.
 
 - 2026-09-24: Extracted only the HSK worksheet into its own project and repository. The application now opens at `/`. Added independent dependencies/configuration and Vercel deployment support; retained compatible workbook storage and JSON backups.

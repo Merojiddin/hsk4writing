@@ -39,6 +39,10 @@ To test another server, set `HSK_BASE_URL`. To use an externally installed Playw
 
 ## Deployment
 
+Live website: https://hsk4writing.vercel.app
+
 GitHub: https://github.com/Merojiddin/hsk4writing
+
+The Vercel project `hsk4writing` is connected to this repository. Pushes to `main` deploy to production automatically.
 
 Vercel configuration is in `vercel.json`: framework Vite, build command `npm run build`, output `dist`. The application is served at `/`; old `/hsk` and `/hsk.html` paths redirect there. No environment variables are required.
