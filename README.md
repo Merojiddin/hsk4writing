@@ -19,7 +19,9 @@ Open http://localhost:5174/. The webpage entry is `index.html`; the main interfa
 - Use **Back up workbook** to download a portable JSON file. **Import data** replaces matching numbered sets and retains the rest.
 - The supplied text includes 440 word-order questions and 215 picture keywords, kept in the original scrambled order. Set 12 is missing, as are the picture keywords for Set 28. Actual picture files still need to be added.
 
-Changes are saved in this browser's IndexedDB. There are no accounts, server database, or secret environment variables. Content is local to each browser and website origin; use JSON backup/import to move saved work between localhost, deployed websites, or devices. Hosting the application does not publish locally entered worksheets.
+Changes automatically save as local drafts. Click **Save to website** to publish the complete workbook, including pictures, to shared Vercel Blob storage. Other devices load the latest shared copy when opening the website. **Load website copy** refreshes manually and first downloads a backup of any unpublished draft. Older tabs cannot overwrite newer website saves.
+
+There is no login: anyone with the link can edit the shared workbook. Storage uses the existing Vercel Hobby account within its free usage limits. Keep JSON backups of important work.
 
 See [content and backup format](docs/hsk-worksheet-content.md) and the [project map](docs/PROJECT_MAP.md).
 
@@ -29,6 +31,7 @@ See [content and backup format](docs/hsk-worksheet-content.md) and the [project 
 npm run build
 npm run lint
 npm run verify:content
+npm run verify:cloud
 # With npm run dev running in another terminal:
 npm run verify:hsk
 ```
@@ -45,4 +48,4 @@ GitHub: https://github.com/Merojiddin/hsk4writing
 
 The Vercel project `hsk4writing` is connected to this repository. Pushes to `main` deploy to production automatically.
 
-Vercel configuration is in `vercel.json`: framework Vite, build command `npm run build`, output `dist`. The application is served at `/`; old `/hsk` and `/hsk.html` paths redirect there. No environment variables are required.
+Vercel configuration is in `vercel.json`: framework Vite, build command `npm run build`, output `dist`. The application is served at `/`; old `/hsk` and `/hsk.html` paths redirect there. The server requires `BLOB_READ_WRITE_TOKEN`, automatically provisioned by the linked private Blob store. Never expose it with a `VITE_` prefix or commit `.env.local`. `npm run dev` supports local editing; use `vercel dev` for cloud API development.

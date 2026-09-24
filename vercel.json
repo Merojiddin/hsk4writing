@@ -14,5 +14,10 @@
       "destination": "/",
       "permanent": true
     }
-  ]
+  ],
+  "functions": {
+    "api/workbook.ts": {
+      "maxDuration": 60
+    }
+  }
 }

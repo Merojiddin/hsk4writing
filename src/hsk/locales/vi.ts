@@ -1,6 +1,27 @@
 import type { en } from './en'
 
 export const vi = {
+  cloudTitle: 'Lưu trữ trên website',
+  cloudSave: 'Lưu lên website',
+  cloudSaving: 'Đang lưu lên website…',
+  cloudSaveSuccess:
+    'Đã lưu lên website. Thiết bị khác sẽ thấy phiên bản này khi mở hoặc tải lại trang.',
+  cloudSaveError:
+    'Không thể lưu hoặc tải bản trên website. Bản nháp trên thiết bị vẫn còn. Hãy kiểm tra kết nối và thử lại.',
+  cloudConflict:
+    'Website đã có phiên bản mới hơn. Hãy tải bản trên website trước khi lưu; bản nháp của bạn sẽ được tải xuống để sao lưu.',
+  cloudLoad: 'Tải bản trên website',
+  cloudLoadSuccess:
+    'Đã tải bản trên website. Bản nháp chưa lưu, nếu có, đã được tải xuống để sao lưu.',
+  cloudLoadChanged:
+    'Bản nháp thay đổi trong lúc tải nên đã được giữ lại. Hãy tải bản trên website sau khi chỉnh sửa xong.',
+  cloudUnavailable:
+    'Không kết nối được lưu trữ website. Bạn vẫn có thể chỉnh sửa và sao lưu trên thiết bị.',
+  cloudLoading: 'Đang kiểm tra lưu trữ website…',
+  cloudUnsaved: 'Bản nháp trên thiết bị · chưa lưu lên website',
+  cloudSynced: 'Đã đồng bộ với website',
+  cloudSharedNotice:
+    'Bất kỳ ai có liên kết này đều có thể chỉnh sửa bản chung. Khi tải bản trên website, phần chỉnh sửa chưa lưu sẽ được tải xuống để sao lưu.',
   brand: 'Hanzi Studio',
   providedContentNote:
     'Đã thêm 440 câu sắp xếp từ và 215 từ gợi ý từ nội dung bạn gửi. Chưa có Đề 12 và từ gợi ý phần tranh của Đề 28. Cần bổ sung các tệp hình ảnh.',

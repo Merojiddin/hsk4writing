@@ -13,9 +13,11 @@
     "typecheck": "tsc -b",
     "preview": "vite preview",
     "verify:hsk": "node scripts/verify-hsk-workbook.mjs",
-    "verify:content": "node scripts/verify-hsk-content.mjs"
+    "verify:content": "node scripts/verify-hsk-content.mjs",
+    "verify:cloud": "node scripts/verify-hsk-cloud.mjs"
   },
   "dependencies": {
+    "@vercel/blob": "^2.8.0",
     "lucide-react": "^1.23.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
@@ -26,8 +28,8 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "oxlint": "^1.71.0",
+    "playwright": "^1.58.2",
     "typescript": "~6.0.2",
-    "vite": "^8.1.1",
-    "playwright": "^1.58.2"
+    "vite": "^8.1.1"
   }
 }

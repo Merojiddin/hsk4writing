@@ -1,4 +1,25 @@
 export const en = {
+  cloudTitle: 'Website storage',
+  cloudSave: 'Save to website',
+  cloudSaving: 'Saving to website…',
+  cloudSaveSuccess:
+    'Saved to the website. Other devices will see this version when they open or reload the page.',
+  cloudSaveError:
+    'Could not save or load the website copy. Your local draft is safe. Check your connection and try again.',
+  cloudConflict:
+    'The website has a newer version. Load the website copy before saving; your draft will be downloaded as a backup.',
+  cloudLoad: 'Load website copy',
+  cloudLoadSuccess:
+    'Website copy loaded. Any unsaved local draft was downloaded as a backup.',
+  cloudLoadChanged:
+    'Your draft changed while loading, so it was kept. Try loading the website copy again when you have finished editing.',
+  cloudUnavailable:
+    'Website storage is unavailable. Local editing and backups still work.',
+  cloudLoading: 'Checking website storage…',
+  cloudUnsaved: 'Local draft · not saved to website',
+  cloudSynced: 'Up to date with website',
+  cloudSharedNotice:
+    'Shared editing is open to anyone with this link. Loading the website copy downloads unsaved edits as a backup.',
   brand: 'Hanzi Studio',
   providedContentNote:
     '440 word-order questions and 215 keywords loaded from your text. Set 12 and the picture keywords for Set 28 were not supplied. Picture files still need to be added.',

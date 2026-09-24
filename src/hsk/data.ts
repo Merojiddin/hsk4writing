@@ -1,4 +1,4 @@
-import providedContent from './provided-content.json'
+import providedContent from './provided-content.json' with { type: 'json' }
 
 export type WordQuestion = { id: string; words: string }
 export type PictureQuestion = {
@@ -15,7 +15,15 @@ export type WorksheetSet = {
 export type Workbook = {
   version: 1
   providedContentRevision?: 1
+  cloudRevision?: string | null
+  cloudDirty?: boolean
   sets: WorksheetSet[]
+}
+
+/** Keep device synchronization metadata out of published snapshots and portable backups. */
+export function toCloudWorkbook(workbook: Workbook): Workbook {
+  const { cloudRevision: _revision, cloudDirty: _dirty, ...content } = workbook
+  return content
 }
 
 export const MAX_TOTAL_IMAGE_CHARS = 90 * 1024 * 1024
@@ -173,6 +181,18 @@ function imageData(value: unknown): string {
 export function validateWorkbook(value: unknown): Workbook {
   const workbook = record(value)
   if (
+    workbook.cloudRevision !== undefined &&
+    workbook.cloudRevision !== null &&
+    (typeof workbook.cloudRevision !== 'string' ||
+      workbook.cloudRevision.length > 128)
+  )
+    throw new Error('Invalid cloud revision.')
+  if (
+    workbook.cloudDirty !== undefined &&
+    typeof workbook.cloudDirty !== 'boolean'
+  )
+    throw new Error('Invalid cloud draft state.')
+  if (
     workbook.providedContentRevision !== undefined &&
     workbook.providedContentRevision !== 1
   ) {
@@ -242,6 +262,12 @@ export function validateWorkbook(value: unknown): Workbook {
   })
   return {
     version: 1,
+    ...(workbook.cloudRevision !== undefined
+      ? { cloudRevision: workbook.cloudRevision as string | null }
+      : {}),
+    ...(workbook.cloudDirty !== undefined
+      ? { cloudDirty: workbook.cloudDirty as boolean }
+      : {}),
     ...(workbook.providedContentRevision === 1
       ? { providedContentRevision: 1 as const }
       : {}),
@@ -260,6 +286,14 @@ export function mergeWorkbook(
   for (const set of validateWorkbook(incoming).sets) sets.set(set.id, set)
   return validateWorkbook({
     version: 1,
+    cloudRevision:
+      existing.cloudRevision !== undefined
+        ? existing.cloudRevision
+        : incoming.cloudRevision,
+    cloudDirty:
+      existing.cloudDirty !== undefined
+        ? existing.cloudDirty
+        : incoming.cloudDirty,
     providedContentRevision:
       existing.providedContentRevision ?? incoming.providedContentRevision,
     sets: Array.from(sets.values()),
