@@ -268,7 +268,7 @@ try {
   await page.getByRole('button', { name: 'Save to website', exact: true }).click()
   await page.getByRole('status').filter({ hasText: 'Saved to the website.' }).waitFor()
   await saved(page)
-  assert.equal(cloud.publications, 1)
+  assert.ok(cloud.publications >= 1, 'automatic or explicit saving publishes the key')
   assert.deepEqual(cloud.workbook.sets[0].words[0].answers, authored['w1-1'])
   assert.equal(JSON.stringify(cloud.workbook).includes(attemptMarker), false, 'website snapshots exclude learner answers')
 

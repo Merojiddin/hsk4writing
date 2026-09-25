@@ -12,7 +12,7 @@ export const vi = {
   retryAnswers: 'Tiếp tục luyện tập',
   answerKey: 'Đáp án',
   answerKeyHelp: 'Thêm các câu trả lời được chấp nhận bên dưới, mỗi dòng một câu. Bạn có thể thêm nhiều cách trả lời đúng.',
-  answerKeySaveHelp: 'Đáp án được lưu cùng sổ bài tập trên thiết bị. Chọn “Lưu lên website” để chia sẻ với các thiết bị khác.',
+  answerKeySaveHelp: 'Đáp án được tự động lưu lên website. Hãy chờ thông báo “Đã đồng bộ với website” trước khi đóng trang.',
   answerKeyCoverage: 'Số câu đã có đáp án',
   acceptedAnswers: 'Các đáp án được chấp nhận',
   acceptedAnswersPlaceholder: 'Mỗi dòng một đáp án được chấp nhận',
@@ -39,12 +39,15 @@ export const vi = {
   practiceKeyLimitError: 'Chưa lưu đáp án này. Tối đa 10 dòng có nội dung, mỗi đáp án không quá 300 ký tự.',
   practiceAnswerLimit: 'Tối đa 300 ký tự',
   cloudTitle: 'Lưu trữ trên website',
+  cloudPictureCount: 'Số ảnh đã lưu lên website',
+  cloudDraftReview: 'Cần kiểm tra bản nháp cũ trên thiết bị. Lưu lên website để chia sẻ, hoặc tải bản trên website sau khi sao lưu bản nháp.',
+  browserStorageUnavailable: 'Không dùng được bộ nhớ trình duyệt. Bạn vẫn có thể tải tài liệu trên website. Hãy giữ trang mở cho đến khi lưu lên website xong hoặc tải bản sao lưu.',
   cloudSave: 'Lưu lên website',
   cloudSaving: 'Đang lưu lên website…',
   cloudSaveSuccess:
     'Đã lưu lên website. Thiết bị khác sẽ thấy phiên bản này khi mở hoặc tải lại trang.',
   cloudSaveError:
-    'Không thể lưu hoặc tải bản trên website. Bản nháp trên thiết bị vẫn còn. Hãy kiểm tra kết nối và thử lại.',
+    'Không thể lưu hoặc tải bản trên website. Các thay đổi vẫn còn trên trang này. Hãy kiểm tra kết nối rồi chọn Lưu lên website để thử lại.',
   cloudConflict:
     'Website đã có phiên bản mới hơn. Hãy tải bản trên website trước khi lưu; bản nháp của bạn sẽ được tải xuống để sao lưu.',
   cloudLoad: 'Tải bản trên website',
@@ -55,10 +58,10 @@ export const vi = {
   cloudUnavailable:
     'Không kết nối được lưu trữ website. Bạn vẫn có thể chỉnh sửa và sao lưu trên thiết bị.',
   cloudLoading: 'Đang kiểm tra lưu trữ website…',
-  cloudUnsaved: 'Bản nháp trên thiết bị · chưa lưu lên website',
+  cloudUnsaved: 'Bản nháp · chưa lưu lên website. Đang tự động lưu; hãy giữ trang này mở.',
   cloudSynced: 'Đã đồng bộ với website',
   cloudSharedNotice:
-    'Bất kỳ ai có liên kết này đều có thể chỉnh sửa bản chung. Khi tải bản trên website, phần chỉnh sửa chưa lưu sẽ được tải xuống để sao lưu.',
+    'Ảnh và nội dung chỉnh sửa được tự động lưu và chia sẻ với người có liên kết. Bài làm chỉ ở trong trình duyệt này. Khi tải bản trên website, phần chỉnh sửa chưa lưu sẽ được sao lưu trước.',
   brand: 'Hanzi Studio',
   providedContentNote:
     'Đã thêm 440 câu sắp xếp từ và 215 từ gợi ý từ nội dung bạn gửi. Chưa có Đề 12 và từ gợi ý phần tranh của Đề 28. Cần bổ sung các tệp hình ảnh.',
@@ -107,7 +110,7 @@ export const vi = {
   picturePrompts: 'bài tập theo tranh',
   nextStep: 'Thêm đáp án của bạn',
   nextStepDescription:
-    'Thêm các câu trả lời được chấp nhận trong mục Đáp án, sau đó lưu lên website. Thêm từ và tranh còn thiếu trong mục Sửa nội dung.',
+    'Thêm câu trả lời đúng trong mục Đáp án, từ và tranh trong mục Sửa nội dung. Hãy chờ xác nhận đã lưu lên website trước khi đóng trang.',
   saved: 'Đã lưu trên thiết bị này',
   saving: 'Đang lưu…',
   saveError: 'Không thể lưu. Hãy sao lưu sổ bài tập để giữ lại các thay đổi.',
@@ -151,7 +154,7 @@ export const vi = {
   blankWarning:
     'Một số câu hỏi vẫn còn trống. Bạn có thể in mẫu hoặc thêm nội dung còn thiếu.',
   close: 'Đóng',
-  loading: 'Đang mở sổ bài tập…',
+  loading: 'Đang tải sổ bài tập và tài liệu được chia sẻ trên website…',
   maxWords: 'Tối đa 100 ký tự',
   maxKeyword: 'Tối đa 12 ký tự',
 } satisfies Record<keyof typeof en, string>

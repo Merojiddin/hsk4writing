@@ -10,7 +10,7 @@ export const en = {
   retryAnswers: 'Continue practicing',
   answerKey: 'Answer key',
   answerKeyHelp: 'Add accepted sentences below, one answer per line. You can include alternative correct sentences.',
-  answerKeySaveHelp: 'Answer keys save with your local workbook. Use “Save to website” to share them with other devices.',
+  answerKeySaveHelp: 'Answer keys save automatically to the website. Wait for “Up to date with website” before closing this page.',
   answerKeyCoverage: 'Questions with an answer key',
   acceptedAnswers: 'Accepted answers',
   acceptedAnswersPlaceholder: 'One accepted sentence per line',
@@ -37,12 +37,15 @@ export const en = {
   practiceKeyLimitError: 'This answer key was not saved. Use up to 10 nonempty lines and 300 characters per answer.',
   practiceAnswerLimit: 'Up to 300 characters',
   cloudTitle: 'Website storage',
+  cloudPictureCount: 'Pictures saved to website',
+  cloudDraftReview: 'An older local draft needs review. Save it to the website to share it, or load the website copy after downloading your draft backup.',
+  browserStorageUnavailable: 'Browser storage is unavailable. Website materials still load. Keep this page open until edits are saved to the website, or download a backup.',
   cloudSave: 'Save to website',
   cloudSaving: 'Saving to website…',
   cloudSaveSuccess:
     'Saved to the website. Other devices will see this version when they open or reload the page.',
   cloudSaveError:
-    'Could not save or load the website copy. Your local draft is safe. Check your connection and try again.',
+    'Could not save or load the website copy. Changes remain on this page. Check your connection, then use Save to website to retry.',
   cloudConflict:
     'The website has a newer version. Load the website copy before saving; your draft will be downloaded as a backup.',
   cloudLoad: 'Load website copy',
@@ -53,10 +56,10 @@ export const en = {
   cloudUnavailable:
     'Website storage is unavailable. Local editing and backups still work.',
   cloudLoading: 'Checking website storage…',
-  cloudUnsaved: 'Local draft · not saved to website',
+  cloudUnsaved: 'Local draft · not saved to website yet. Saving automatically; keep this page open.',
   cloudSynced: 'Up to date with website',
   cloudSharedNotice:
-    'Shared editing is open to anyone with this link. Loading the website copy downloads unsaved edits as a backup.',
+    'Uploads and edits save automatically and are shared with anyone using this link. Learner answers stay in this browser. Loading the website copy backs up unpublished edits first.',
   brand: 'Hanzi Studio',
   providedContentNote:
     '440 word-order questions and 215 keywords loaded from your text. Set 12 and the picture keywords for Set 28 were not supplied. Picture files still need to be added.',
@@ -100,7 +103,7 @@ export const en = {
   picturePrompts: 'picture prompts',
   nextStep: 'Add your answer key',
   nextStepDescription:
-    'Use Answer key to add accepted sentences, then save to the website. Add missing words and pictures in Edit content.',
+    'Add accepted sentences in Answer key, and words and pictures in Edit content. Wait for the website save confirmation before closing.',
   saved: 'Saved on this device',
   saving: 'Saving…',
   saveError: 'Could not save. Back up your workbook to keep your changes.',
@@ -153,7 +156,7 @@ export const en = {
   blankWarning:
     'Some questions are still blank. You can print the template or add the missing content.',
   close: 'Close',
-  loading: 'Opening your workbook…',
+  loading: 'Loading your workbook and shared website materials…',
   maxWords: 'Up to 100 characters',
   maxKeyword: 'Up to 12 characters',
 } as const

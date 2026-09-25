@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import {
   ArrowDownToLine,
   ArrowLeft,
@@ -43,6 +43,7 @@ import {
   fetchCloudWorkbook,
   publishWorkbook,
   reconcileCloudWorkbook,
+  sameWorkbook,
 } from './cloud'
 
 type Copy = { [K in keyof typeof en]: string }
@@ -52,6 +53,8 @@ const wordCount = (set: WorksheetSet) =>
   set.words.filter((q) => q.words.trim()).length
 const pictureCount = (set: WorksheetSet) =>
   set.pictures.filter((q) => q.word.trim() && q.image).length
+const uploadedPictureCount = (workbook: Workbook) =>
+  workbook.sets.reduce((total, set) => total + set.pictures.filter((q) => q.image).length, 0)
 
 function Sheet({
   set,
@@ -368,7 +371,7 @@ function Editor({
 export function WorkbookApp() {
   const [workbook, setWorkbook] = useState<Workbook>(() => createWorkbook())
   const [loaded, setLoaded] = useState(false)
-  const [loadFailed, setLoadFailed] = useState(false)
+  const [localStorageUnavailable, setLocalStorageUnavailable] = useState(false)
   const [active, setActive] = useState(1)
   const [language, setLanguage] = useState<Language>('en')
   const [mode, setMode] = useState<'solve' | 'answers' | 'preview' | 'edit'>('solve')
@@ -382,10 +385,16 @@ export function WorkbookApp() {
   const [cloudState, setCloudState] = useState<
     'loading' | 'ready' | 'saving' | 'error' | 'conflict'
   >('loading')
+  const [cloudAutosaveBlocked, setCloudAutosaveBlocked] = useState(false)
+  const [draftNeedsReview, setDraftNeedsReview] = useState(false)
+  const [cloudPictureCount, setCloudPictureCount] = useState<number | null>(null)
+  const cloudBusy = useRef(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const printedRef = useRef<HTMLDivElement>(null)
   const revision = useRef(0)
   const workbookRef = useRef(workbook)
+  const saveAutomatically = useEffectEvent(() => { void saveToWebsite(true) })
+  const applyRefreshedWorkbook = useEffectEvent((next: Workbook) => storeLocalWorkbook(next))
   const copy: Copy = language === 'vi' ? vi : en
   const selected = workbook.sets.find((s) => s.id === active)!
   const keyedQuestions = [...selected.words, ...selected.pictures].filter(
@@ -397,43 +406,36 @@ export function WorkbookApp() {
   ).length
   useEffect(() => {
     let cancelled = false
-    loadWorkbook()
-      .then((saved) => {
-        if (!cancelled) {
-          if (saved) {
-            const restored = restoreWorkbook(saved)
-            workbookRef.current = restored
-            setWorkbook(restored)
-            if (saved.providedContentRevision !== 1) {
-              revision.current += 1
-              setSaveStatus('saving')
-            }
-          }
-          setLoaded(true)
-          void fetchCloudWorkbook()
-            .then((remote) => {
-              if (cancelled) return
-              const local =
-                saved || revision.current > 0 ? workbookRef.current : null
-              const next = reconcileCloudWorkbook(local, remote)
-              if (
-                JSON.stringify(next) !== JSON.stringify(workbookRef.current)
-              ) {
-                workbookRef.current = next
-                revision.current += 1
-                setSaveStatus('saving')
-                setWorkbook(next)
-              }
-              setCloudState('ready')
-            })
-            .catch(() => {
-              if (!cancelled) setCloudState('error')
-            })
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setLoadFailed(true)
-      })
+    // A failed private-browser cache must never prevent loading shared materials.
+    // Wait for the shared copy before presenting a fresh browser with starter pages.
+    void Promise.allSettled([loadWorkbook(), fetchCloudWorkbook()]).then(([local, cloud]) => {
+      if (cancelled) return
+      const saved = local.status === 'fulfilled' ? local.value : null
+      const restored = saved ? restoreWorkbook(saved) : null
+      const next = cloud.status === 'fulfilled'
+        ? reconcileCloudWorkbook(restored, cloud.value)
+        : restored ?? createWorkbook()
+      workbookRef.current = next
+      setWorkbook(next)
+      setLocalStorageUnavailable(local.status === 'rejected')
+      if (local.status === 'rejected') {
+        setSaveStatus('saveError')
+      } else if (!saved || !sameWorkbook(saved, next)) {
+        revision.current += 1
+        setSaveStatus('saving')
+      }
+      if (cloud.status === 'fulfilled') {
+        // Legacy drafts have no common revision; require their existing explicit save action.
+        const needsReview = Boolean(restored && restored.cloudRevision === undefined &&
+          next.cloudDirty && cloud.value.workbook)
+        setDraftNeedsReview(needsReview)
+        setCloudPictureCount(cloud.value.workbook ? uploadedPictureCount(cloud.value.workbook) : 0)
+        setCloudState('ready')
+      } else {
+        setCloudState('error')
+      }
+      setLoaded(true)
+    })
     return () => {
       cancelled = true
     }
@@ -442,7 +444,7 @@ export function WorkbookApp() {
     document.documentElement.lang = language
   }, [language])
   useEffect(() => {
-    if (!loaded || revision.current === 0) return
+    if (!loaded || localStorageUnavailable || revision.current === 0) return
     const current = revision.current
     const timer = window.setTimeout(() => {
       saveWorkbook(workbook)
@@ -459,16 +461,59 @@ export function WorkbookApp() {
         })
     }, 250)
     return () => window.clearTimeout(timer)
-  }, [workbook, loaded])
+  }, [workbook, loaded, localStorageUnavailable])
   useEffect(() => {
-    if (saveStatus === 'saved') return
+    if ((localStorageUnavailable || saveStatus === 'saved') && !workbook.cloudDirty && cloudState !== 'saving') return
     const warn = (event: BeforeUnloadEvent) => {
       event.preventDefault()
       event.returnValue = ''
     }
     window.addEventListener('beforeunload', warn)
     return () => window.removeEventListener('beforeunload', warn)
-  }, [saveStatus])
+  }, [saveStatus, workbook.cloudDirty, cloudState, localStorageUnavailable])
+  useEffect(() => {
+    if (!loaded || cloudState !== 'ready' || cloudAutosaveBlocked || draftNeedsReview ||
+        !workbook.cloudDirty || workbook.cloudRevision === undefined) return
+    const timer = window.setTimeout(saveAutomatically, 1500)
+    return () => window.clearTimeout(timer)
+  }, [loaded, workbook, cloudState, cloudAutosaveBlocked, draftNeedsReview])
+  useEffect(() => {
+    if (!loaded || cloudState === 'saving' || cloudState === 'loading' || cloudState === 'conflict') return
+    let cancelled = false
+    let refreshing = false
+    const refresh = async () => {
+      if (refreshing || cloudBusy.current || document.visibilityState === 'hidden') return
+      if (workbookRef.current.cloudDirty && cloudState === 'ready' && !cloudAutosaveBlocked) return
+      refreshing = true
+      const capturedRevision = revision.current
+      try {
+        const remote = await fetchCloudWorkbook(workbookRef.current)
+        if (cancelled || cloudBusy.current || capturedRevision !== revision.current) return
+        const next = reconcileCloudWorkbook(workbookRef.current, remote)
+        if (!sameWorkbook(workbookRef.current, next)) applyRefreshedWorkbook(next)
+        setCloudPictureCount(remote.workbook ? uploadedPictureCount(remote.workbook) : 0)
+        setCloudState('ready')
+        setCloudAutosaveBlocked(false)
+      } catch {
+        if (!cancelled && !cloudBusy.current && capturedRevision === revision.current) setCloudState('error')
+      } finally {
+        refreshing = false
+      }
+    }
+    const onRefresh = () => { void refresh() }
+    const onPageShow = (event: PageTransitionEvent) => { if (event.persisted) onRefresh() }
+    window.addEventListener('focus', onRefresh)
+    window.addEventListener('online', onRefresh)
+    window.addEventListener('pageshow', onPageShow)
+    document.addEventListener('visibilitychange', onRefresh)
+    return () => {
+      cancelled = true
+      window.removeEventListener('focus', onRefresh)
+      window.removeEventListener('online', onRefresh)
+      window.removeEventListener('pageshow', onPageShow)
+      document.removeEventListener('visibilitychange', onRefresh)
+    }
+  }, [loaded, cloudState, cloudAutosaveBlocked, localStorageUnavailable])
 
   function storeLocalWorkbook(next: Workbook) {
     if (imageDataSize(next) > MAX_TOTAL_IMAGE_CHARS) {
@@ -478,39 +523,56 @@ export function WorkbookApp() {
     if (workbookRef.current === next) return
     workbookRef.current = next
     revision.current += 1
-    setSaveStatus('saving')
+    setSaveStatus(localStorageUnavailable ? 'saveError' : 'saving')
     setWorkbook(next)
   }
   function updateWorkbook(patch: (current: Workbook) => Workbook) {
+    setCloudAutosaveBlocked(false)
     storeLocalWorkbook({ ...patch(workbookRef.current), cloudDirty: true })
   }
-  async function saveToWebsite() {
-    const snapshot = workbookRef.current
-    const capturedRevision = revision.current
-    if (snapshot.cloudRevision === undefined || cloudState !== 'ready') return
+  async function saveToWebsite(automatic = false) {
+    let snapshot = workbookRef.current
+    let capturedRevision = revision.current
+    if (cloudBusy.current || cloudState === 'loading' || cloudState === 'saving' || cloudState === 'conflict') return
+    if (automatic && (cloudState !== 'ready' || snapshot.cloudRevision === undefined)) return
+    cloudBusy.current = true
+    setCloudAutosaveBlocked(false)
+    setDraftNeedsReview(false)
     setCloudState('saving')
     try {
+      if (snapshot.cloudRevision === undefined) {
+        const remote = await fetchCloudWorkbook()
+        snapshot = { ...reconcileCloudWorkbook(workbookRef.current, remote), cloudRevision: remote.revision }
+        storeLocalWorkbook(snapshot)
+        capturedRevision = revision.current
+      }
       const cloudRevision = await publishWorkbook(
         snapshot,
-        snapshot.cloudRevision,
+        snapshot.cloudRevision!,
       )
       storeLocalWorkbook({
         ...workbookRef.current,
         cloudRevision,
         cloudDirty: revision.current !== capturedRevision,
       })
+      setCloudPictureCount(uploadedPictureCount(snapshot))
       setCloudState('ready')
-      setMessage(copy.cloudSaveSuccess)
+      if (!automatic) setMessage(copy.cloudSaveSuccess)
     } catch (error) {
+      setCloudAutosaveBlocked(true)
       setCloudState(error instanceof CloudConflictError ? 'conflict' : 'ready')
       setMessage(
         error instanceof CloudConflictError
           ? copy.cloudConflict
           : copy.cloudSaveError,
       )
+    } finally {
+      cloudBusy.current = false
     }
   }
   async function loadWebsiteCopy() {
+    if (cloudBusy.current) return
+    cloudBusy.current = true
     const capturedRevision = revision.current
     setCloudState('loading')
     try {
@@ -527,11 +589,16 @@ export function WorkbookApp() {
         cloudRevision: remote.revision,
         cloudDirty: !remote.workbook && Boolean(workbookRef.current.cloudDirty),
       })
+      setCloudPictureCount(remote.workbook ? uploadedPictureCount(remote.workbook) : 0)
+      setCloudAutosaveBlocked(false)
+      setDraftNeedsReview(false)
       setCloudState('ready')
       setMessage(copy.cloudLoadSuccess)
     } catch {
       setCloudState('error')
       setMessage(copy.cloudSaveError)
+    } finally {
+      cloudBusy.current = false
     }
   }
   function updateSet(patch: (current: WorksheetSet) => WorksheetSet) {
@@ -614,14 +681,8 @@ export function WorkbookApp() {
     return (
       <main className="loading-screen">
         <div className="brand-icon">文</div>
-        {loadFailed ? (
-          <p role="alert">{copy.loadError}</p>
-        ) : (
-          <>
-            <LoaderCircle className="spin" size={20} />
-            <p>{copy.loading}</p>
-          </>
-        )}
+        <LoaderCircle className="spin" size={20} />
+        <p>{copy.loading}</p>
       </main>
     )
 
@@ -781,6 +842,61 @@ export function WorkbookApp() {
                 </button>
               </div>
             )}
+            <section className="cloud-card website-sync" data-testid="website-sync">
+              <h3>
+                <CloudUpload size={16} />
+                {copy.cloudTitle}
+              </h3>
+              <button
+                className="button primary"
+                disabled={cloudState === 'loading' || cloudState === 'saving' || cloudState === 'conflict'}
+                onClick={() => void saveToWebsite()}
+              >
+                {cloudState === 'saving' ? (
+                  <LoaderCircle className="spin" size={15} />
+                ) : (
+                  <CloudUpload size={15} />
+                )}
+                {cloudState === 'saving'
+                  ? copy.cloudSaving
+                  : copy.cloudSave}
+              </button>
+              <p role="status">
+                {cloudState === 'error'
+                  ? copy.cloudUnavailable
+                  : cloudState === 'conflict'
+                    ? copy.cloudConflict
+                    : cloudState === 'loading'
+                      ? copy.cloudLoading
+                      : cloudState === 'saving'
+                        ? copy.cloudSaving
+                        : cloudAutosaveBlocked
+                          ? copy.cloudSaveError
+                          : draftNeedsReview || (workbook.cloudDirty && workbook.cloudRevision === undefined)
+                            ? copy.cloudDraftReview
+                            : workbook.cloudDirty
+                              ? copy.cloudUnsaved
+                              : copy.cloudSynced}
+                {cloudPictureCount !== null && (
+                  <span className="shared-count" data-testid="shared-picture-count">
+                    {copy.cloudPictureCount}: <strong>{cloudPictureCount}</strong>
+                  </span>
+                )}
+              </p>
+              <button
+                className="text-button"
+                disabled={
+                  cloudState === 'saving' || cloudState === 'loading'
+                }
+                onClick={() => void loadWebsiteCopy()}
+              >
+                {copy.cloudLoad}
+              </button>
+              <small>{copy.cloudSharedNotice}</small>
+            </section>
+            {localStorageUnavailable && (
+              <p className="notice" role="alert">{copy.browserStorageUnavailable}</p>
+            )}
             <p className="sample-note">{copy.providedContentNote}</p>
             <div
               className={`workspace-body ${mode === 'solve' || mode === 'answers' ? 'practice-layout' : ''}`}
@@ -828,47 +944,6 @@ export function WorkbookApp() {
                 </div>
               </div>
               <aside className="inspector">
-                <section className="inspector-card cloud-card">
-                  <h3>
-                    <CloudUpload size={16} />
-                    {copy.cloudTitle}
-                  </h3>
-                  <button
-                    className="button primary"
-                    disabled={cloudState !== 'ready'}
-                    onClick={() => void saveToWebsite()}
-                  >
-                    {cloudState === 'saving' ? (
-                      <LoaderCircle className="spin" size={15} />
-                    ) : (
-                      <CloudUpload size={15} />
-                    )}
-                    {cloudState === 'saving'
-                      ? copy.cloudSaving
-                      : copy.cloudSave}
-                  </button>
-                  <p role="status">
-                    {cloudState === 'error'
-                      ? copy.cloudUnavailable
-                      : cloudState === 'conflict'
-                        ? copy.cloudConflict
-                        : cloudState === 'loading'
-                          ? copy.cloudLoading
-                          : workbook.cloudDirty
-                            ? copy.cloudUnsaved
-                            : copy.cloudSynced}
-                  </p>
-                  <button
-                    className="text-button"
-                    disabled={
-                      cloudState === 'saving' || cloudState === 'loading'
-                    }
-                    onClick={() => void loadWebsiteCopy()}
-                  >
-                    {copy.cloudLoad}
-                  </button>
-                  <small>{copy.cloudSharedNotice}</small>
-                </section>
                 <section className="inspector-card">
                   <h3>
                     <SlidersHorizontal size={16} />
@@ -988,7 +1063,7 @@ export function WorkbookApp() {
                   ) : (
                     <Circle size={14} />
                   )}
-                  <span>{copy[saveStatus]}</span>
+                  <span>{localStorageUnavailable ? copy.browserStorageUnavailable : copy[saveStatus]}</span>
                 </div>
                 <p className="print-hint">{copy.printTip}</p>
                 {ready < 15 && (

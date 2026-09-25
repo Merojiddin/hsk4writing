@@ -15,6 +15,7 @@
     "verify:hsk": "node scripts/verify-hsk-workbook.mjs",
     "verify:content": "node scripts/verify-hsk-content.mjs",
     "verify:cloud": "node scripts/verify-hsk-cloud.mjs",
+    "verify:sync": "node scripts/verify-hsk-sync-browser.mjs",
     "verify:practice": "node scripts/verify-hsk-practice.mjs",
     "verify:practice-browser": "node scripts/verify-hsk-practice-browser.mjs"
   },

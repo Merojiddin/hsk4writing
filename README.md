@@ -14,7 +14,7 @@ Open http://localhost:5174/. The webpage entry is `index.html`; the main interfa
 ## Use the workbook
 
 - **Solve exercises** opens by default. Type your sentences and choose **Check answers** to compare with the saved answer key. Your answers stay in this browser across sets and reloads; they are not published or included in workbook backups.
-- Open **Answer key** to enter accepted sentences, one per line (up to 10 alternatives per question). Keys save with the workbook and can be shared using **Save to website**. No answer keys are supplied initially.
+- Open **Answer key** to enter accepted sentences, one per line (up to 10 alternatives per question). Keys save automatically with the shared workbook. No answer keys are supplied initially.
 - Checking ignores whitespace and common punctuation. Questions without a key are not graded. Picture sentences that differ from the key are marked for review because other sentences may also be valid; this is a comparison tool, not a grammar or meaning evaluator.
 - Select a set and choose **Edit content** to add word groups, keywords, and pictures.
 - Pictures support JPG/JPEG, PNG, WebP, and GIF files up to 4 MB. JPGs work even when the device supplies missing or nonstandard file-type metadata.
@@ -23,7 +23,9 @@ Open http://localhost:5174/. The webpage entry is `index.html`; the main interfa
 - Use **Back up workbook** to download a portable JSON file. **Import data** replaces matching numbered sets and retains the rest.
 - The supplied text includes 440 word-order questions and 215 picture keywords, kept in the original scrambled order. Set 12 is missing, as are the picture keywords for Set 28. Actual picture files still need to be added.
 
-Changes automatically save as local drafts. Click **Save to website** to publish the complete workbook, including pictures, to shared Vercel Blob storage. Other devices load the latest shared copy when opening the website. **Load website copy** refreshes manually and first downloads a backup of any unpublished draft. Older tabs cannot overwrite newer website saves.
+Uploads and edits automatically save locally and publish the complete workbook to shared Vercel Blob storage. Wait for **Up to date with website** and check **Pictures saved to website** before closing the uploading device. Edits made during a save are queued for the next save. **Save to website** retries a failed publication; older drafts without a recorded website revision need explicit review/save. **Load website copy** refreshes manually and first downloads a backup of unpublished edits. Older tabs cannot overwrite newer website saves.
+
+Fresh and incognito browsers load the website materials even when browser storage is unavailable. Returning to a clean page or reconnecting checks for newer website content. Unpublished local drafts are preserved. Browser-only materials from an older version must be synced from the original uploading device; they cannot be recovered from an incognito window.
 
 There is no login: anyone with the link can edit the shared workbook. Storage uses the existing Vercel Hobby account within its free usage limits. Keep JSON backups of important work.
 
@@ -40,6 +42,7 @@ npm run verify:practice
 # With npm run dev running in another terminal:
 npm run verify:hsk
 npm run verify:practice-browser
+npm run verify:sync
 ```
 
 Browser checks require Google Chrome and Poppler's `pdfinfo` command (on macOS: `brew install poppler`). Playwright is a development dependency. The checks use an isolated browser context and verify editing, uploads, persistence, partial imports, invalid images, language selection, print controls, A4 page counts, long prompts, mobile layouts, and cross-tab conflict handling. Generated screenshots/PDFs stay in ignored `artifacts/hsk/`.

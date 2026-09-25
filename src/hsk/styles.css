@@ -1560,6 +1560,59 @@ h1 {
   color: #787f6e;
   margin-top: 10px;
 }
+.website-sync {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 24px;
+  padding: 18px 20px;
+  margin-bottom: 24px;
+  border: 1px solid #d5ddca;
+  border-radius: 8px;
+  background: #f1f4eb;
+}
+.website-sync h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+.website-sync .button {
+  width: auto;
+  grid-column: 2;
+  grid-row: 1 / 3;
+  align-self: start;
+}
+.website-sync p {
+  font-size: 13px;
+  margin: 0;
+}
+.website-sync small {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  margin-top: 0;
+}
+.website-sync .text-button {
+  grid-column: 2;
+  justify-self: start;
+  font-size: 12px;
+}
+.shared-count {
+  display: block;
+  margin-top: 4px;
+}
+@media (max-width: 640px) {
+  .website-sync {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 15px;
+  }
+  .website-sync .button,
+  .website-sync .text-button {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: stretch;
+  }
+  .website-sync p { grid-row: 2; }
+}
 .workbook-toolbar {
   flex-wrap: wrap;
   gap: 18px;
