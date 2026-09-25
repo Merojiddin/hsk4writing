@@ -23,10 +23,11 @@ const saved = (p) =>
     .waitFor()
 const open = async (p) => {
   await p.goto(`${base}/`)
+  await p.getByRole('button', { name: 'Worksheet preview', exact: true }).click()
   await p.locator('.worksheet-page').first().waitFor()
 }
-const edit = (p) => p.locator('.mode-tabs button').nth(1).click()
-const preview = (p) => p.locator('.mode-tabs button').nth(0).click()
+const edit = (p) => p.getByRole('button', { name: 'Edit content', exact: true }).first().click()
+const preview = (p) => p.getByRole('button', { name: 'Worksheet preview', exact: true }).click()
 const choose = (p, id) =>
   p.locator(`.set-grid button[aria-label="Set ${id}"]`).click()
 const uploadJson = async (p, data) => {
@@ -131,6 +132,43 @@ try {
       buffer: Buffer.from(image, 'base64'),
     })
   await page.locator('.image-upload img').waitFor()
+  const jpeg = await page.evaluate(() => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 600
+    canvas.height = 400
+    const ctx = canvas.getContext('2d')
+    ctx.fillStyle = '#f2eee2'
+    ctx.fillRect(0, 0, 600, 400)
+    ctx.fillStyle = '#783d42'
+    ctx.fillRect(200, 80, 200, 240)
+    return canvas.toDataURL('image/jpeg').split(',')[1]
+  })
+  const imageInput = page.locator('.image-upload input').first()
+  assert.match(await imageInput.getAttribute('accept'), /\.jpg,\.jpeg/)
+  for (const [name, mimeType] of [
+    ['fixture.jpg', 'image/jpeg'],
+    ['fixture.JPG', 'image/jpg'],
+    ['fixture.jpeg', 'application/octet-stream'],
+    ['fixture-no-type.jpg', ''],
+  ]) {
+    await page.getByRole('button', { name: 'Remove picture 1', exact: true }).click()
+    await page.locator('.image-upload img').waitFor({ state: 'hidden' })
+    await imageInput.setInputFiles({ name, mimeType, buffer: Buffer.from(jpeg, 'base64') })
+    await page.waitForFunction(() =>
+      document.querySelector('.image-upload img')?.getAttribute('src')?.startsWith('data:image/jpeg;base64,'),
+    )
+    await saved(page)
+    assert.equal(await page.locator('.notice').count(), 0, `${name} uploads with MIME type ${mimeType || '(empty)'}`)
+  }
+  const beforeBadImage = await page.locator('.image-upload img').first().getAttribute('src')
+  await imageInput.setInputFiles({
+    name: 'broken.jpg',
+    mimeType: 'image/jpeg',
+    buffer: Buffer.from([0xff, 0xd8, 0xff, 0x00]),
+  })
+  await page.getByRole('status').filter({ hasText: 'Choose a valid JPG/JPEG' }).waitFor()
+  assert.equal(await page.locator('.image-upload img').first().getAttribute('src'), beforeBadImage, 'invalid JPEG does not replace the saved image')
+  await page.getByRole('button', { name: 'Close', exact: true }).click()
   await saved(page)
   await page.reload()
   await choose(page, 2)

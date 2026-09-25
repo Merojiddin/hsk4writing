@@ -1,11 +1,12 @@
 import providedContent from './provided-content.json' with { type: 'json' }
 
-export type WordQuestion = { id: string; words: string }
+export type WordQuestion = { id: string; words: string; answers?: string[] }
 export type PictureQuestion = {
   id: string
   word: string
   image: string
   alt: string
+  answers?: string[]
 }
 export type WorksheetSet = {
   id: number
@@ -27,6 +28,8 @@ export function toCloudWorkbook(workbook: Workbook): Workbook {
 }
 
 export const MAX_TOTAL_IMAGE_CHARS = 90 * 1024 * 1024
+export const MAX_ANSWER_LENGTH = 300
+export const MAX_ACCEPTED_ANSWERS = 10
 
 export class WorkbookSizeError extends Error {
   constructor() {
@@ -44,7 +47,7 @@ export class WorkbookConflictError extends Error {
   }
 }
 
-const MAX_IMAGE_BYTES = 4 * 1024 * 1024
+export const MAX_IMAGE_BYTES = 4 * 1024 * 1024
 const MAX_IMAGE_LENGTH = Math.ceil(MAX_IMAGE_BYTES / 3) * 4 + 40
 const DATABASE_NAME = 'hsk-writing-workbook'
 const STORE_NAME = 'workbooks'
@@ -160,6 +163,14 @@ function text(value: unknown, maxLength: number): string {
   return value
 }
 
+function acceptedAnswers(value: unknown): { answers?: string[] } {
+  if (value === undefined) return {}
+  if (!Array.isArray(value) || value.length > MAX_ACCEPTED_ANSWERS) {
+    throw new Error(`Expected up to ${MAX_ACCEPTED_ANSWERS} accepted answers.`)
+  }
+  return { answers: value.map((answer) => text(answer, MAX_ANSWER_LENGTH)) }
+}
+
 function imageData(value: unknown): string {
   const image = text(value, MAX_IMAGE_LENGTH)
   if (image === '') return image
@@ -243,7 +254,11 @@ export function validateWorkbook(value: unknown): Workbook {
       id: set.id,
       words: set.words.map((value) => {
         const question = record(value)
-        return { id: questionId(question.id), words: text(question.words, 100) }
+        return {
+          id: questionId(question.id),
+          words: text(question.words, 100),
+          ...acceptedAnswers(question.answers),
+        }
       }),
       pictures: set.pictures.map((value) => {
         const question = record(value)
@@ -256,6 +271,7 @@ export function validateWorkbook(value: unknown): Workbook {
           word: text(question.word, 12),
           image,
           alt: text(question.alt, 200),
+          ...acceptedAnswers(question.answers),
         }
       }),
     }

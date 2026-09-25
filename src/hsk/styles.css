@@ -21,6 +21,7 @@ body {
 }
 button,
 input,
+textarea,
 select {
   font: inherit;
 }
@@ -38,6 +39,7 @@ button:disabled {
 button,
 a,
 input,
+textarea,
 select,
 summary {
   outline-offset: 4px;
@@ -45,6 +47,7 @@ summary {
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
+textarea:focus-visible,
 select:focus-visible,
 summary:focus-visible {
   outline: 2px solid #783d42;
@@ -1557,8 +1560,34 @@ h1 {
   color: #787f6e;
   margin-top: 10px;
 }
+.workbook-toolbar {
+  flex-wrap: wrap;
+  gap: 18px;
+}
+.mode-tabs {
+  flex-wrap: wrap;
+}
+.answer-key-link {
+  margin-bottom: 16px;
+  line-height: 1.6;
+  text-align: left;
+}
 @media (max-width: 980px) {
   .cloud-card {
     grid-column: 1 / -1;
+  }
+  .practice-layout .content-column,
+  .practice-layout .inspector {
+    order: initial;
+  }
+}
+@media (max-width: 640px) {
+  .mode-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .mode-tabs button {
+    white-space: normal;
+    text-align: left;
   }
 }

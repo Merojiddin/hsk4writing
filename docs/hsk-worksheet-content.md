@@ -21,10 +21,10 @@ The following illustrates the fields only; an import must include the complete 1
     {
       "id": 1,
       "words": [
-        { "id": "w1-1", "words": "是谁 / 厨房的 / 打破的 / 窗户 / 究竟" }
+        { "id": "w1-1", "words": "是谁 / 厨房的 / 打破的 / 窗户 / 究竟", "answers": ["厨房的窗户究竟是谁打破的？"] }
       ],
       "pictures": [
-        { "id": "p1-1", "word": "戴", "image": "", "alt": "" }
+        { "id": "p1-1", "word": "戴", "image": "", "alt": "", "answers": ["他戴着一顶帽子。", "他戴着帽子。"] }
       ]
     }
   ]
@@ -32,6 +32,14 @@ The following illustrates the fields only; an import must include the complete 1
 ```
 
 Field limits: `words` is at most 100 characters, `word` is at most 12 characters, and `alt` is at most 200 characters. Images are empty strings or base64 data URLs for PNG, JPEG, WebP, or GIF, limited to 4 MiB of decoded image data each. The entire workbook is limited to 90 MiB of image data URL characters, including base64 encoding and MIME prefixes. This leaves room for metadata in backups under the 100 MiB import-file limit. External image URLs and SVG images are not accepted. Character limits use JavaScript string length. Unsupported fields are discarded during validation. Malformed or oversized imports fail before any existing content is replaced; the total image limit also applies to merged workbooks.
+
+Both question types accept an optional `answers` array of at most 10 strings, each at most 300 characters. Omitted or empty arrays mean no answer key; old version 1 backups remain valid. Keys are retained by local saves, website publication, export, and numbered-set imports. As with all other set content, importing a set replaces its complete answer key, including when the imported set omits answers. The examples above are illustrative; enter your own supplied keys through **Answer key**, one accepted sentence per line. No keys are inferred or added to the starter content.
+
+## Solving and checking
+
+**Solve exercises** accepts a Chinese sentence for every prompt and checks it when **Check answers** is selected. The comparison normalizes Unicode width, whitespace, and common punctuation; it does not infer meaning or assess grammar. Any accepted variant can match. Unkeyed questions are ungraded, blank answers remain unanswered, and nonmatching picture sentences need human review because multiple sentences may be valid. The supplied key is shown after checking. Editing an answer, prompt, or key invalidates displayed results until checked again. **Continue practicing** hides the results without clearing typed answers.
+
+Learner attempts are stored separately from workbooks in browser localStorage, one entry per question. They are never sent to the website, exported in workbook JSON, or printed. Entries contain the typed answer and a compact signature of the question content; changed questions retain the typed sentence but require a fresh check. Storage failure is shown in the interface, and in-memory answers remain available while the page stays open. Attempts belong to this browser profile, not a signed-in student account.
 
 ## Storage and implementation
 

@@ -3,7 +3,7 @@ import { createServer } from 'vite'
 const server = await createServer({
   configFile: false,
   cacheDir: 'node_modules/.vite-cloud-verification',
-  server: { middlewareMode: true },
+  server: { middlewareMode: true, ws: false },
   appType: 'custom',
 })
 try {

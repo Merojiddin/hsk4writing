@@ -35,6 +35,9 @@ import {
 import type { PictureQuestion, Workbook, WorksheetSet } from './data'
 import { en } from './locales/en'
 import { vi } from './locales/vi'
+import { AnswerKeyEditor, PracticePanel } from './PracticePanel'
+import { normalizeAnswer } from './practice'
+import { readExerciseImage } from './images'
 import {
   CloudConflictError,
   fetchCloudWorkbook,
@@ -241,23 +244,8 @@ function Editor({
     }))
   async function readImage(file: File | undefined, index: number) {
     if (!file) return
-    if (
-      !['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(
-        file.type,
-      ) ||
-      file.size > 4 * 1024 * 1024
-    )
-      return onError(copy.imageError)
     try {
-      const data = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(String(reader.result))
-        reader.onerror = reject
-        reader.readAsDataURL(file)
-      })
-      const img = new Image()
-      img.src = data
-      await img.decode()
+      const data = await readExerciseImage(file)
       updatePicture(index, { image: data })
     } catch {
       onError(copy.imageError)
@@ -337,7 +325,7 @@ function Editor({
                 </span>
                 <input
                   type="file"
-                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  accept=".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/jpg,image/png,image/webp,image/gif"
                   aria-label={`${copy.uploadImage} ${index + 1}`}
                   onChange={(e) => {
                     void readImage(e.target.files?.[0], index)
@@ -383,7 +371,7 @@ export function WorkbookApp() {
   const [loadFailed, setLoadFailed] = useState(false)
   const [active, setActive] = useState(1)
   const [language, setLanguage] = useState<Language>('en')
-  const [mode, setMode] = useState<'preview' | 'edit'>('preview')
+  const [mode, setMode] = useState<'solve' | 'answers' | 'preview' | 'edit'>('solve')
   const [scope, setScope] = useState<'current' | 'all'>('current')
   const [saveStatus, setSaveStatus] = useState<
     'saved' | 'saving' | 'saveError' | 'conflictError'
@@ -400,6 +388,9 @@ export function WorkbookApp() {
   const workbookRef = useRef(workbook)
   const copy: Copy = language === 'vi' ? vi : en
   const selected = workbook.sets.find((s) => s.id === active)!
+  const keyedQuestions = [...selected.words, ...selected.pictures].filter(
+    (question) => question.answers?.some((answer) => normalizeAnswer(answer)),
+  ).length
   const ready = wordCount(selected) + pictureCount(selected)
   const completedSets = workbook.sets.filter(
     (s) => wordCount(s) + pictureCount(s) === 15,
@@ -745,6 +736,22 @@ export function WorkbookApp() {
               </div>
               <div className="mode-tabs" aria-label={copy.content}>
                 <button
+                  className={mode === 'solve' ? 'selected' : ''}
+                  aria-pressed={mode === 'solve'}
+                  onClick={() => setMode('solve')}
+                >
+                  <Pencil size={15} />
+                  {copy.solve}
+                </button>
+                <button
+                  className={mode === 'answers' ? 'selected' : ''}
+                  aria-pressed={mode === 'answers'}
+                  onClick={() => setMode('answers')}
+                >
+                  <CheckCircle2 size={15} />
+                  {copy.answerKey}
+                </button>
+                <button
                   className={mode === 'preview' ? 'selected' : ''}
                   aria-pressed={mode === 'preview'}
                   onClick={() => setMode('preview')}
@@ -775,9 +782,21 @@ export function WorkbookApp() {
               </div>
             )}
             <p className="sample-note">{copy.providedContentNote}</p>
-            <div className="workspace-body">
+            <div
+              className={`workspace-body ${mode === 'solve' || mode === 'answers' ? 'practice-layout' : ''}`}
+            >
               <div className="content-column">
-                {mode === 'preview' ? (
+                <div hidden={mode !== 'solve'}>
+                  <PracticePanel set={selected} copy={copy} />
+                </div>
+                {mode === 'solve' ? null : mode === 'answers' ? (
+                  <AnswerKeyEditor
+                    key={active}
+                    set={selected}
+                    copy={copy}
+                    update={updateSet}
+                  />
+                ) : mode === 'preview' ? (
                   <Preview set={selected} copy={copy} language={language} />
                 ) : (
                   <Editor
@@ -921,6 +940,13 @@ export function WorkbookApp() {
                   </div>
                   <div className="content-divider" />
                   <button
+                    className="text-button answer-key-link"
+                    onClick={() => setMode('answers')}
+                  >
+                    <CheckCircle2 size={16} />
+                    {copy.answerKey} · {keyedQuestions}/15
+                  </button>
+                  <button
                     className="button secondary"
                     onClick={() => inputRef.current?.click()}
                     disabled={importing}
@@ -945,9 +971,9 @@ export function WorkbookApp() {
                   <p>{copy.nextStepDescription}</p>
                   <button
                     className="text-button"
-                    onClick={() => setMode('edit')}
+                    onClick={() => setMode('answers')}
                   >
-                    {copy.edit}
+                    {copy.answerKey}
                     <ArrowRight size={14} />
                   </button>
                 </div>

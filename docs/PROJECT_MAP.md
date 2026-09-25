@@ -10,6 +10,9 @@ Standalone React 19 + TypeScript application built with Vite. `index.html` loads
 | --- | --- |
 | `index.html`, `src/hsk/main.tsx` | HTML entry, React root, page metadata, and stylesheet import. |
 | `src/hsk/WorkbookApp.tsx` | Set navigation, word/picture editing, uploads, imports/backups, save feedback, language selection, preview, and printing. `Sheet` is shared between preview and print. |
+| `src/hsk/PracticePanel.tsx`, `src/hsk/practice.css` | Default Solve exercises view, learner inputs and feedback, answer-key editor, and responsive practice styling. |
+| `src/hsk/practice.ts` | Deterministic answer comparison, question signatures, and private per-question learner storage. |
+| `src/hsk/images.ts` | Image-byte detection and browser decoding; normalizes JPG/JPEG uploads regardless of supplied MIME metadata. |
 | `src/hsk/styles.css` | Responsive interface, physical A4 pages, word-length typography, and print rules that hide controls/backgrounds. |
 | `src/hsk/provided-content.json` | Supplied transcription: 440 word groups and 215 keywords in original order, with explicit empty arrays for missing parts. |
 | `src/hsk/data.ts` | Workbook types, 45-set starter, strict validation, partial merging, image budgets, and revision-aware IndexedDB persistence. |
@@ -18,6 +21,7 @@ Standalone React 19 + TypeScript application built with Vite. `index.html` loads
 | `api/workbook.ts`, `server/workbook-cloud.ts` | Same-origin JSON endpoint, signed direct uploads/downloads, snapshot validation, conditional pointer publication, and old snapshot cleanup. |
 | `public/hsk-favicon.svg` | App icon. |
 | `scripts/verify-hsk-workbook.mjs` | Isolated browser and PDF regression checks; writes ignored `artifacts/hsk/`. |
+| `scripts/verify-hsk-practice.mjs`, `scripts/verify-hsk-practice-browser.mjs` | Answer schema/checking/storage tests and isolated solving/key-editing/cloud/print browser regression checks. |
 | `docs/hsk-worksheet-content.md` | Editable content schema, limits, import semantics, and storage details. |
 | `vite.config.ts`, `tsconfig.json`, `package.json` | Standalone build, TypeScript, dependencies, and verification commands. |
 | `vercel.json` | Vite deployment and redirects from `/hsk` and `/hsk.html` to `/`. |
@@ -28,7 +32,11 @@ Standalone React 19 + TypeScript application built with Vite. `index.html` loads
 - Starter content comes from the supplied transcription: 440 word-order questions and 215 keywords. Set 12 is blank; Set 28 has no picture keywords. Actual picture files were not supplied. Duplicated source uploads for Sets 29 and 45 do not create duplicate sets.
 - Text fields update the selected set. Uploaded images must decode successfully. Import validates JSON and images, then replaces only matching numbered sets. Backups embed pictures in portable JSON.
 - Version 1 JSON: `{ version: 1, sets: [{ id, words: [{ id, words }], pictures: [{ id, word, image, alt }] }] }`. Set IDs are 1–45. Question IDs must be unique. Word groups allow 100 characters; keywords 12; image descriptions 200.
+- Both question types support optional `answers: string[]` (up to 10 variants, 300 characters each). Old version 1 files remain valid. Keys survive validation, IndexedDB, cloud publication, backups, and partial imports; matching imported sets replace their keys along with the prompts. Starter content has no supplied keys.
+- Solve exercises opens by default. Answer key edits accepted sentences one per line; keys use the existing local draft / Save to website flow. Checking compares normalized Unicode width, whitespace and common punctuation, with explicit unkeyed/unanswered results. Nonmatching picture sentences are flagged for human review. Results show supplied answers only after checking and become stale when a learner answer, prompt, or key changes.
+- Learner attempts use separate per-question localStorage entries, containing an answer and compact question-content signature. They persist across sets/reloads but never enter shared workbook data, JSON backups, or print. Practice stays mounted when switching modes to retain in-memory attempts if storage fails; the failure is shown to the learner.
 - PNG/JPEG/WebP/GIF data URLs are supported, at most 4 MiB decoded per image. A workbook allows 90 MiB total image-string characters, keeping its exported backup below the 100 MiB import limit. External image URLs and SVGs are rejected.
+- The upload picker explicitly accepts `.jpg` and `.jpeg`. Uploads inspect the image signature and decode successfully before insertion, so JPEG files with `image/jpg`, generic, or missing MIME metadata are stored as `image/jpeg`. Corrupt images leave the previous picture untouched.
 - Optional `providedContentRevision: 1` marks the supplied content as applied. On first load of an older workbook, `restoreWorkbook` fills blank fields and replaces the untouched original Set 01 sample; authored nonempty fields and pictures are preserved. This migration runs once so subsequent intentional deletions stay deleted. JSON validation and partial merges retain the revision.
 - Debounced saves use IndexedDB database `hsk-writing-workbook` v1, store `workbooks`, key `current`. Stored value: `{ revision, workbook }`; exported JSON remains the plain workbook. Legacy bare stored workbooks still load.
 - Queued saves compare the previously loaded revision inside an atomic read/write transaction. A stale tab cannot overwrite a newer tab's changes; it retains unsaved edits for backup and must reload before saving again.
@@ -44,11 +52,15 @@ Standalone React 19 + TypeScript application built with Vite. `index.html` loads
 - `npm run verify:cloud`: draft reconciliation, remote refresh, legacy content preservation, metadata validation and portable backup checks.
 - `npm run dev` serves local editing only. Use `vercel dev` with linked Blob environment variables for full local cloud endpoints.
 - `npm run verify:content`: validates supplied-content counts, missing parts, exact representative transcription, and safe one-time migration. Its Vite cache is isolated in `node_modules/.vite-content-verification` so it cannot invalidate a running development server.
+- `npm run verify:practice`: checks answer-key validation/compatibility, normalization and grading states, signatures, and private storage failures/isolation.
+- `npm run verify:practice-browser`: requires the local server, Chrome and Poppler; exercises solving, accepted variants, key editing, stale feedback, attempts across reloads, English/Vietnamese, mobile layout, key backup/import/cloud transfer, and blank two-page A4 printing. Cloud endpoints are mocked; no published workbook is modified.
 - `npm run verify:hsk`: requires a running local server at `http://127.0.0.1:5174`, Google Chrome, and Poppler `pdfinfo`. Covers edits, pictures, reload persistence, backup/partial import, malformed images, languages, print button, exact A4 page counts, long-text page bounds, mobile overflow, and cross-tab conflicts. Playwright is a development dependency; `HSK_PLAYWRIGHT_MODULE` can override its module path and `HSK_BASE_URL` can override the tested server.
 - Visual print QA: render PDFs from `artifacts/hsk/` using `pdftoppm`, then inspect the page images.
 
 ## Update notes
 
+- 2026-09-25: Added solving and checking, editable answer keys with accepted variants, and private saved learner attempts. Blank two-page printing and legacy version 1 workbook compatibility are preserved.
+- 2026-09-25: Fixed JPG/JPEG selection and upload when file-type metadata is missing or nonstandard; verified normal, alias, generic, and empty MIME types plus corrupt-image rejection.
 - 2026-09-24: Published to `https://hsk4writing.vercel.app` and connected Vercel project `hsk4writing` to `Merojiddin/hsk4writing`; pushes to `main` trigger production deployment.
 - 2026-09-24: Added supplied text for 44 Part 1 sets and 43 Part 2 keyword sets without correcting or rearranging the transcription. Added an explicit missing-content notice in both languages and a one-time migration preserving existing edits and images.
 
